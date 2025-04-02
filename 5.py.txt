@@ -1,0 +1,50 @@
+import numpy as np 
+from tensorflow import keras 
+from sklearn.datasets import load_iris 
+from sklearn.model_selection import train_test_split 
+from sklearn.preprocessing import OneHotEncoder, StandardScaler 
+ 
+# Load dataset (Iris dataset for classification) 
+iris = load_iris() 
+X, y = iris.data, iris.target 
+ 
+# One-hot encode target labels (Fix: Use sparse_output instead of sparse) 
+encoder = OneHotEncoder(sparse_output=False) 
+y = encoder.fit_transform(y.reshape(-1, 1)) 
+ 
+# Split into training and testing sets 
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42) 
+ 
+# Standardize features 
+scaler = StandardScaler() 
+X_train = scaler.fit_transform(X_train) 
+X_test = scaler.transform(X_test) 
+ 
+# Build the Neural Network model 
+model = keras.Sequential([ 
+    keras.layers.Dense(10, activation='relu', input_shape=(X_train.shape[1],)),  # Hidden Layer 1 
+    keras.layers.Dense(10, activation='relu'),  # Hidden Layer 2 
+    keras.layers.Dense(y.shape[1], activation='softmax')  # Output Layer (3 classes) 
+]) 
+ 
+# Compile the model 
+model.compile(optimizer='adam', loss='categorical_crossentropy', metrics=['accuracy']) 
+ 
+# Train the model 
+history = model.fit(X_train, y_train, epochs=100, batch_size=10, validation_data=(X_test, y_test), verbose=1) 
+ 
+# Evaluate model performance 
+ 
+ 
+ 
+test_loss, test_accuracy = model.evaluate(X_test, y_test) 
+print(f"\nModel Accuracy on Test Data: {test_accuracy * 100:.2f}% ") 
+ 
+# Predict on test data 
+y_pred = model.predict(X_test) 
+y_pred_classes = np.argmax(y_pred, axis=1) 
+y_test_classes = np.argmax(y_test, axis=1) 
+ 
+# Display some predictions 
+print("\nSample Predictions (True vs Predicted Labels):") 
+print(np.vstack((y_test_classes[:10], y_pred_classes[:10])).T)

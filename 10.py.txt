@@ -1,0 +1,53 @@
+import numpy as np 
+import matplotlib.pyplot as plt 
+import seaborn as sns 
+ 
+# Grid & Hyperparameters 
+GRID_SIZE, GAMMA, ALPHA, EPSILON, EPISODES = 5, 0.9, 0.1, 0.2, 500 
+ACTIONS = {'up': (-1, 0), 'down': (1, 0), 'left': (0, -1), 'right': (0, 1)} 
+START, GOAL = (0, 0), (4, 4) 
+Q_table = np.zeros((GRID_SIZE, GRID_SIZE, len(ACTIONS))) 
+ 
+# Reward grid (-1 per step, +10 goal, -10 wall) 
+REWARD_GRID = np.full((GRID_SIZE, GRID_SIZE), -1) 
+REWARD_GRID[GOAL] = 10 
+ 
+def move(state, action): 
+    """Returns the next state & reward.""" 
+    next_state = (state[0] + action[0], state[1] + action[1]) 
+    return (state, -10) if not (0 <= next_state[0] < GRID_SIZE and 0 <= next_state[1] < GRID_SIZE) else 
+(next_state, REWARD_GRID[next_state]) 
+ 
+def choose_action(state): 
+    """Epsilon-greedy action selection.""" 
+    return np.random.choice(list(ACTIONS)) if np.random.rand() < EPSILON else 
+list(ACTIONS)[np.argmax(Q_table[state])] 
+ 
+def train(): 
+    """Q-learning training loop.""" 
+    rewards = [] 
+    for episode in range(EPISODES): 
+        state, total_reward = START, 0 
+        while state != GOAL: 
+            action = choose_action(state) 
+            next_state, reward = move(state, ACTIONS[action]) 
+            Q_table[state][list(ACTIONS).index(action)] += ALPHA * (reward + GAMMA * 
+np.max(Q_table[next_state]) - Q_table[state][list(ACTIONS).index(action)]) 
+            state, total_reward = next_state, total_reward + reward 
+        rewards.append(total_reward) 
+    return rewards 
+ 
+ 
+ 
+# Run training & visualize results 
+rewards = train() 
+ 
+plt.plot(rewards) 
+plt.xlabel("Episodes") 
+plt.ylabel("Total Reward") 
+plt.title("Q-learning Performance") 
+plt.show() 
+ 
+sns.heatmap(np.max(Q_table, axis=2), annot=True, cmap="coolwarm", fmt=".2f") 
+plt.title("Q-values Heatmap") 
+plt.show()

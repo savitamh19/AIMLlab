@@ -1,0 +1,47 @@
+import numpy as np 
+import matplotlib.pyplot as plt 
+ 
+def kernel_weight(query_x, X, tau): 
+    """Compute weights using a Gaussian kernel.""" 
+    query_x = np.array(query_x).reshape(1, -1)  # Ensure query_x is 2D 
+    distances = np.linalg.norm(X - query_x, axis=1) ** 2  # Compute squared distances 
+    weights = np.exp(-distances / (2 * tau ** 2))  # Gaussian kernel 
+    return np.diag(weights)  # Return diagonal weight matrix 
+ 
+def locally_weighted_regression(X, y, tau, query_points): 
+    """Perform Locally Weighted Regression.""" 
+    X_bias = np.c_[np.ones(len(X)), X]  # Add bias term 
+    y_pred = [] 
+ 
+    for query_x in query_points: 
+        query_x_bias = np.hstack(([1], query_x.ravel()))  # Ensure 1D array 
+        W = kernel_weight(query_x, X, tau)  # Compute weight matrix 
+        theta = np.linalg.pinv(X_bias.T @ W @ X_bias) @ (X_bias.T @ W @ y)  # Compute parameters 
+        y_pred.append(query_x_bias @ theta)  # Predict value 
+ 
+    return np.array(y_pred) 
+ 
+# Generate sample data 
+np.random.seed(42) 
+X = np.linspace(-3, 3, 30).reshape(-1, 1)  # Reshape X to be a 2D column vector 
+y = np.sin(X).flatten() + np.random.normal(scale=0.2, size=X.shape[0])  # True function with noise 
+ 
+# Define test points for visualization 
+X_test = np.linspace(-3, 3, 100).reshape(-1, 1)  # Reshape X_test to 2D 
+ 
+# Perform LWR with bandwidth parameter tau 
+tau = 0.5  # Smoothing parameter 
+y_pred = locally_weighted_regression(X, y, tau, X_test) 
+ 
+# Plot original data and LWR curve 
+plt.scatter(X, y, label="Data Points", color="blue", alpha=0.6) 
+ 
+ 
+ 
+ 
+plt.plot(X_test, y_pred, label=f"LWR Curve (τ={tau})", color="red", linewidth=2) 
+plt.xlabel("X") 
+plt.ylabel("y") 
+plt.title("Locally Weighted Regression (LWR)") 
+plt.legend() 
+plt.show()
